@@ -1,28 +1,41 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/axiosConfig';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isVerified: boolean;
-}
+// Load initial state from localStorage
+const loadState = () => {
+  try {
+    const serializedState = localStorage.getItem('authState');
+    if (serializedState === null) {
+      return {
+        user: null,
+        token: localStorage.getItem('token'),
+        isAuthenticated: false,
+        loading: false,
+        error: null,
+      };
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    return {
+      user: null,
+      token: localStorage.getItem('token'),
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+    };
+  }
+};
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-}
+const initialState = loadState();
 
-const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
-  loading: false,
-  error: null,
+// Save state to localStorage
+const saveState = (state: any) => {
+  try {
+    const serializedState = JSON.stringify(state);
+    localStorage.setItem('authState', serializedState);
+  } catch (err) {
+    // Handle errors
+  }
 };
 
 export const register = createAsyncThunk(
@@ -71,6 +84,7 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       localStorage.removeItem('token');
+      localStorage.removeItem('authState');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -89,10 +103,12 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        saveState(state);
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Registration failed';
+        saveState(state);
       })
       // Login
       .addCase(login.pending, (state) => {
@@ -105,10 +121,12 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem('token', action.payload.token);
+        saveState(state);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Login failed';
+        saveState(state);
       })
       // Verify Email
       .addCase(verifyEmail.pending, (state) => {
@@ -121,10 +139,12 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem('token', action.payload.token);
+        saveState(state);
       })
       .addCase(verifyEmail.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Email verification failed';
+        saveState(state);
       })
       // Forgot Password
       .addCase(forgotPassword.pending, (state) => {
@@ -133,10 +153,12 @@ const authSlice = createSlice({
       })
       .addCase(forgotPassword.fulfilled, (state) => {
         state.loading = false;
+        saveState(state);
       })
       .addCase(forgotPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to send reset email';
+        saveState(state);
       })
       // Reset Password
       .addCase(resetPassword.pending, (state) => {
@@ -145,10 +167,12 @@ const authSlice = createSlice({
       })
       .addCase(resetPassword.fulfilled, (state) => {
         state.loading = false;
+        saveState(state);
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Password reset failed';
+        saveState(state);
       });
   },
 });

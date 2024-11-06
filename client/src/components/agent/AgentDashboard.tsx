@@ -1,5 +1,4 @@
-import React from 'react';
-import { Calendar, Clock, UserX } from 'lucide-react';
+import { Calendar, UserX } from 'lucide-react';
 import AvailabilityScheduler from './AvailabilityScheduler';
 import OutOfOfficeManager from './OutOfOfficeManager';
 
